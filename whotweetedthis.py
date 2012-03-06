@@ -4,6 +4,7 @@ import urllib
 import urllib2
 import simplejson
 import tweepy
+import urlparse
 from twitterKeys import TwitterKeys 
 from tweepy.cursor import Cursor
 
@@ -44,6 +45,8 @@ class WhoTweetedThis(object):
                 for urls in a:
                   print json.get('id')
                   print urls['expanded_url']
+                  print urlparse.urlparse(urls['expanded_url'])
+                  
                   for i in self.unshorten(urls['expanded_url']):
                     print "unshortened: " + i
           
