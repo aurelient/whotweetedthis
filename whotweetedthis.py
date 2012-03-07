@@ -1,81 +1,78 @@
-#!/usr/bin/python
-import pprint
-import urllib
+import os
+import sys
+import jinja2
+import webapp2 
 import urllib2
-import simplejson
-import tweepy
-import urlparse
-from twitterKeys import TwitterKeys 
-from tweepy.cursor import Cursor
+from gaeoauth import OAuthHandler, OAuthClient
+from checkLink import CheckLink
 
-print "Content-type: text/html\n\n"
+from datetime import datetime, timedelta
+from hashlib import sha1
+from hmac import new as hmac
+from os.path import dirname, join as join_path
+from random import getrandbits
+from time import time
+from urllib import urlencode, quote as urlquote
+from uuid import uuid4
+from wsgiref.handlers import CGIHandler
 
-class WhoTweetedThis(object):
+sys.path.insert(0, join_path(dirname(__file__), 'lib')) # extend sys.path
 
-  def __init__(self):
-    self.authenticate(TwitterKeys())
-    self.cache = {}
+from demjson import decode as decode_json
 
-  # == OAuth Authentication ==
-  def authenticate(self, keys):
-    # This mode of authentication is the new preferred way
-    # of authenticating with Twitter.
+from google.appengine.api.urlfetch import fetch as urlfetch, GET, POST
+from google.appengine.ext import db
 
-    self.auth = tweepy.OAuthHandler(keys.consumer_key, keys.consumer_secret)
-    self.auth.set_access_token(keys.access_token, keys.access_token_secret)
+jinja_environment = jinja2.Environment(
+    loader=jinja2.FileSystemLoader(os.path.dirname(__file__)))
 
-  def parseTweets(self):
-    api = tweepy.API(self.auth)
+# ------------------------------------------------------------------------------
+# The core of who tweeted this?
+# fetches tweets from users' timeline and check them against the submitted url
+# ------------------------------------------------------------------------------
 
-    # If the authentication was successful, you should
-    # see the name of the account print out
-    print api.me().name      
 
-    # page = 1
-    for x in range(1,5):
-      print "Page " + str(x)
-      statuses = api.home_timeline(page=x,include_entities="true")
-      for status in statuses:
-        json = status._json
-        # print json
-        for prop, attrib in json.items():
-          if prop == "entities":
-            for p, a in attrib.items():
-              if p == "urls":
-                for urls in a:
-                  print json.get('id')
-                  print urls['expanded_url']
-                  print urlparse.urlparse(urls['expanded_url'])
-                  
-                  for i in self.unshorten(urls['expanded_url']):
-                    print "unshortened: " + i
+class MainHandler(webapp2.RequestHandler):
+    """Demo Twitter App."""
+
+    # def __init__(self, request, response):
+    #      self.initialize(request, response)
+    #      self.cache = {}
+    #      self.statusCache = {}
+    #      self.longUrls = {}      
+ 
+    def get(self, service):
+        # self.response.headers['Content-Type'] = 'text/plain'
+        # self.response.out.write('Hello, webapp!')
+
+        self.cache = {}
+        self.statusCache = {}
+        self.longUrls = {}      
+        self.template_values = {}
+        self.client = OAuthClient('twitter', self)
+
+        link = self.request.get('url')
+
+        if not self.client.get_cookie():
+            self.template_values['logged'] = False
+        else:
+          self.template_values['logged'] = True
           
+          info = self.client.get('/account/verify_credentials')
+          self.template_values['info'] = info
           
-  # def unshorten_url(self, url):
-  #     parsed = urlparse.urlparse(url)
-  #     h = httplib.HTTPConnection(parsed.netloc)
-  #     h.request('HEAD', parsed.path)
-  #     response = h.getresponse()
-  #     if response.status/100 == 3 and response.getheader('Location'):
-  #         return response.getheader('Location')
-  #     else:
-  #         return url
+          # rate_info = self.client.get('/account/rate_limit_status')
+          # write("<strong>API Rate Limit Status:</strong> %r" % rate_info)
+          
+          if "" != link:
+            self.template_values['link'] = link
+            
+        template = jinja_environment.get_template('index.html')
+        self.response.out.write(template.render(self.template_values))
 
 
-  def unshorten(self, url):
-    # start_response('200 OK', [('Content-type','text/plain')])
-    # url = environ['PATH_INFO'].lstrip('/')
-    # yield 'Looking up: ' + url + '...'
-    try:
-      result = self.cache.get(url)
-      if result is None:
-        result = urllib2.urlopen(url).geturl()
-        self.cache[url] = result
-    except urllib2.HTTPError:
-      result = "URL Doesn't exist"
-    except ValueError:
-      result = "Invalid Url"
-    yield result
-    
-app = WhoTweetedThis()
-app.parseTweets()
+app = webapp2.WSGIApplication([
+         ('/oauth/(.*)/(.*)', OAuthHandler),
+         ('/link/(.*)', CheckLink),
+         ('/(.*)', MainHandler)
+         ], debug=True)
