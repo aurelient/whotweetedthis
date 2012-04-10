@@ -9,6 +9,8 @@
 
 		<!-- Le styles -->
 		<link href="css/bootstrap.min.css" rel="stylesheet">
+		<link href="css/stylesheet.css" rel="stylesheet">
+		<link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css"/>
 		<style>
 			body {
 				padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
@@ -30,32 +32,71 @@
 	</head>
 
 	<body>
-		<div class="container">
-			<h1>Who tweeted this?</h1>
+	<div class="container">
+	<div class="row">
+		<div class="span6 offset4">
+			<h1>Who tweeted this ?</h1>
+		</div>
+	</div>
+		
+	<div class="row">
+		<div class="span6 offset4">
+		<form id="form" action="/" method="get">
+			<div class="input-append">
+				<input id="appendedPrependedInput" class="span4" type="urltweet" name="url" value="{{ link }}" size="16">
+				<button value="who" class="btn" type="submit">Go!</button>
+			</div>
+	    </form>
+		</div>
+	</div>
 
-			{% if logged %}
-				<p>
-					<strong>Screen Name: {{ info['screen_name'] }} </strong><br />
-					<strong>Location: {{ info['location'] }} </strong><br />
-	          
-					<a href="/oauth/twitter/logout">Logout from Twitter</a><br /><br />
-				</p>
-			{% else %}
-				<a href="/oauth/twitter/login">Login via Twitter</a>
-			{% endif %}    
+	<div class="row">
+		{% if logged %}
+		<div class="span4 offset4">
+			<p>
+				Logged on twitter as: {{ info['screen_name'] }}
+			</p>
+		</div>
+		<div id="logout">
+			 <a href="/oauth/twitter/logout">logout</a>
+		</div>
+		{% else %}
+		<div class="span6 offset4">
+			<p>
+				<a href="/oauth/twitter/login">Login via Twitter</a> to let us process your tweets.
+			</p>
+		</div>
+		{% endif %}    
+	</div>
 
-			<form id="form" action="/" method="get">
-				<div>
-					<input name="url" value="{{ link }}"/> <input type="submit" value="who">
-				</div>
-		    </form>
-		</div> <!-- /container -->
+
+	<div class="row">
+		<div class="span4 offset4">
+			<div id="progressbar"></div>
+		</div>
+	</div>
+	
+	<div class="row">
+		<div class="span6 offset4">
+			<div id="feedback"></div>
+			<a id="keeplooking" href="#">Keep looking!</a>
+		</div>
+	</div>
+
+
+
+	</div>
+
+	<div id="small">
+	<p>code <a href="http://twitter.com/#!/aurelient">@aurelient</a> &nbsp; | &nbsp;design <a href="http://twitter.com/#!/evStyleDesign">@evstyledesign</a></p>
+	</div>
 
 		<!-- Le javascript
 		================================================== -->
 		<!-- Placed at the end of the document so the pages load faster -->
 		<script src="js/jquery-1.7.1.js"></script>
 		<script src="js/bootstrap.min.js"></script>
+		<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
 		
 		
 		<script>
@@ -64,35 +105,57 @@
 
 			{% if link %}
 			var found = false;
-			var maxPage = 10;
+			var maxPage = 5;
+			var page = 1;
+			var progress = 0;
+			var timeout = 1000;
+
 			$(document).ready(function() {
-				var page = 1;
-				for (page = 1; page < maxPage; page++) {
-					checkLink("{{link}}", page);
-				}
-				// TODO this check inside a timer!
-				if (!found) {
-					alert("Couldn't find it :( \n Are you sure the link comes from twitter?");
-				}
+				checkLink("{{link}}"); 
+				$("#progressbar").progressbar({ value: 0 });
+				$("#keeplooking").click(function () {
+					maxPage += 10;
+					timeout = 250;
+					checkLink("{{link}}");
+				    $("#progressbar").progressbar( "option", "value", 100 * progress / maxPage );
+					$("#feedback").html("<p>Digging deeper in your tweets</p>");
+					$("#keeplooking").toggle();
+				});
 			});
 			{% else %}
 			{% endif %}   
 
-			function checkLink(link,page){
+			function checkLink(link) {
+				console.log(page + " --- " + link);
 				$.ajax({
 				  type: "GET",
-				  url: "link/"+link+"/?page="+page
+				  url: "link/"+encodeURIComponent(link)+"/?page="+page
 				}).done(function( msg ) {
-					if (msg != "") {
-						window.location.href = "https://twitter.com/#!/" + msg;
+					message = jQuery.parseJSON(msg);
+					progress++;
+					console.log(message.url);
+					if (message.url != "") {
+						window.location.href = "https://twitter.com/#!/" + message.url;
 					} 
-					else //Not found on this page
-						alert(page);
-				})
+					else {
+					    $("#progressbar").progressbar( "option", "value", 100 * progress / maxPage );
+						console.log("Not found on page " + message.page);
+						if (progress == maxPage) {
+							$("#feedback").html("<p>Checked your past " + 20*maxPage + " tweets without success :( </p>");
+							$("#keeplooking").toggle();					      
+						}
+					}
+				});
+				if (page<maxPage) {
+					var tps = (page-progress)*timeout;
+					console.log(tps);
+					setTimeout(function() { checkLink(link); }, tps);
+				}
+				page++;
 			}
 		{% else %}
 		{% endif %}    
 		</script>
-		<script src="jquery.twitterbird.js"></script>
+		<script src="js/jquery.twitterbird.js"></script>
 	</body>
 </html>

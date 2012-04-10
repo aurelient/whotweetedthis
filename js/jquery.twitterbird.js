@@ -84,7 +84,7 @@ function FlyBird(round)
 		stoppx = '-130px' ;
 	}
 
-$("#twitterbird").css("background",'url("twitter.png") no-repeat scroll ' + startpx + ' ' + stoppx + ' transparent').css("left", left).css("top",top);
+$("#twitterbird").css("background",'url("../img/twitter.png") no-repeat scroll ' + startpx + ' ' + stoppx + ' transparent').css("left", left).css("top",top);
 if( left > (window.innerWidth - 70))
 {	top = Math.ceil((window.innerHeight- 100 )*Math.random())
 	left = 0 ; 
