@@ -29,6 +29,18 @@
 		<link rel="apple-touch-icon" href="images/apple-touch-icon.png">
 		<link rel="apple-touch-icon" sizes="72x72" href="images/apple-touch-icon-72x72.png">
 		<link rel="apple-touch-icon" sizes="114x114" href="images/apple-touch-icon-114x114.png">
+		<script type="text/javascript">
+		  var _gaq = _gaq || [];
+		  _gaq.push(['_setAccount', 'UA-2318885-3']);
+		  _gaq.push(['_trackPageview']);
+
+		  (function() {
+		    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+		    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+		    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		  })();
+
+		</script>
 	</head>
 
 	<body>
@@ -43,7 +55,11 @@
 		<div class="span6 offset4">
 		<form id="form" action="/" method="get">
 			<div class="input-append">
-				<input id="appendedPrependedInput" class="span4" type="urltweet" name="url" value="{{ link }}" size="16">
+				{% if link %}
+				<input id="appendedPrependedInput" class="span4 inputbox" type="urltweet" name="url" value="{{ link }}" size="16"/>
+				{% else %}
+				<input id="appendedPrependedInput" class="span4 inputbox" type="urltweet" name="url" value="Enter the url to look up!" size="16"/>
+				{% endif %}    
 				<button value="who" class="btn" type="submit">Who?</button>
 			</div>
 	    </form>
@@ -130,6 +146,8 @@
 			{% endif %}   
 
 			function checkLink(link) {
+				link = link.replace(/^\s+/g,"");//remove heading whitespace
+			    link = link.replace(/\s+$/g,"");//remove trailing whitespace
 				console.log(page + " --- " + link);
 				$.ajax({
 				  type: "GET",
