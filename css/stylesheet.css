@@ -12,18 +12,23 @@ a:hover {
 }
 
 h1 {
+    margin-top: 15%;
     color: #777;
     /* font-family: 'VNI-HLThuphap', Times, serif;
     font-size: 60px;
     font-family: 'Little Insect', Times, serif;
     font-family: 'Arvil', Times, serif; */
     font-family: 'Diner-Regular', Times, serif;
-    font-size: 8.3em;
-    line-height: 2em;
+    font-size: 8.5em;
+    line-height: 1.3em;
     font-weight: normal;
     opacity: 0.7;
     text-shadow: 0px 4px 2px #fff;
     z-index: 0;
+}
+
+#container {
+  height:100%;
 }
 
 #progressbar {
@@ -38,24 +43,25 @@ h1 {
   margin: 0px;
 }
 
-#small > p {
-    color: #666;
-    font-family: 'Lane_Humouresque', Times, serif;
-    /* font-family: 'Infinity', Times, serif; */
-    font-weight: normal;
-    font-size: 1.1em;
-    opacity: 0.8;
-		position:absolute;
-		bottom:5px;
-		width: 100%;
-    text-align: center;
+#small {
+   bottom: 5px;
+   position: absolute;
 }
 
-#small > a {
+#small p {
+  color: #666;
+  opacity: 0.8;
+  font-family: 'Lane_Humouresque', Times, serif;
+  /* font-family: 'Infinity', Times, serif; */
+  font-weight: normal;
+  font-size: 1.1em;
+}
+
+#small a {
     color: #333;
 }
 
-#small > a:hover {
+#small a:hover {
     color: #29ABE2;
 }
 
